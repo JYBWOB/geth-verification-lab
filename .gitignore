@@ -1,0 +1,4 @@
+**/go-ethereum/*
+!**/go-ethereum/core
+**/go-ethereum/core/*
+!**/go-ethereum/core/state_processor.go*
