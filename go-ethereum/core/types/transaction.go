@@ -65,6 +65,7 @@ func NewTx(inner TxData) *Transaction {
 	return tx
 }
 
+// by jyb
 func (tx *Transaction) TxInner() TxData {
 	return tx.inner
 }
