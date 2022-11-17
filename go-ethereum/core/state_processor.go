@@ -21,6 +21,9 @@ import (
 	"math/big"
 	"sync"
 	"time"
+	"os"
+	"strconv"
+	"encoding/json"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
@@ -69,6 +72,13 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		ttx := types.NewTx(tmp_tx.TxInner())
 		txs[i] = ttx
 	}
+
+    writer, err := os.OpenFile("./res.csv", os.O_WRONLY|os.O_CREATE, 0666)
+    if err != nil {
+        fmt.Printf("打开文件错误= %v \n", err)
+    }
+	defer writer.Close()
+
 	/* -------------- serial part -------------- */
 	var (
 		receipts    types.Receipts
@@ -106,40 +116,98 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		allLogs = append(allLogs, receipt.Logs...)
 	}
 
-	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
-	p.engine.Finalize(p.bc, header, statedb, block.Transactions(), block.Uncles())
-	
 	if flag==1 {
-		fmt.Printf("\t Serial execution needs: %v ms\n",(time.Now().UnixNano()-s)/1000000)
+		period := (time.Now().UnixNano()-s)/1000000
+
+		fmt.Printf("\t Serial : %v ms\n", period)
+		wstr := fmt.Sprintf("Tx nums: %d Serial :\n", tx_counter)
+		writer.WriteString(wstr)
+		writer.WriteString(strconv.Itoa(int(period)))
+		writer.WriteString("\n")
 	}
 	
 	/* -------------- serial part -------------- */
 
 	/* -------------- parallel part -------------- */
-	
-	var usedGast = new(uint64)
-	
-	var wg sync.WaitGroup
-	flag = 0
-	s = time.Now().UnixNano()
-	for i, txt := range txs {
-		blockContext := NewEVMBlockContext(header, p.bc, nil)
-		flag = 1
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			vmenvt := vm.NewEVM(blockContext, vm.TxContext{}, statedbt, p.config, cfg)
-			msgt, _ := txt.AsMessage(types.MakeSigner(p.config, header.Number), header.BaseFee)
-			statedbt.Prepare(txt.Hash(), i)
-			_, _ = applyTransaction(msgt, p.config, p.bc, nil, gp, statedbt, blockNumber, blockHash, txt, usedGast, vmenvt)
-		}()
+
+	jsonData, err := os.ReadFile("./config.json")
+	if err != nil {
+		fmt.Println("json 文件打开失败\n")
 	}
-	wg.Wait()
-	if flag==1 {
-		fmt.Printf("\t Parallel execution needs: %v ms\n",(time.Now().UnixNano()-s)/1000000)
+	mMap := make(map[string][]int)
+	err = json.Unmarshal(jsonData, &mMap)
+	if err != nil {
+		fmt.Println("json Unmarshal 失败")
+	}
+	// } else {
+    //     fmt.Printf("json Unmarshal 成功\n")
+    //     fmt.Printf("%v\n", mMap["thread"])
+    //     fmt.Printf("%v\n", mMap["step"])
+    // }
+	threads := mMap["thread"]
+	steps := mMap["step"]
+
+	// statedbt := statedb.Copy()
+	// txs := make([]*types.Transaction, tx_counter)
+	// for i, tmp_tx := range block.Transactions(){
+	// 	ttx := types.NewTx(tmp_tx.TxInner())
+	// 	txs[i] = ttx
+	// }
+
+	if  threads[0] != 0 && len(txs) > 0 && threads[0] * steps[0] <= len(txs) {
+		for configId := 0; configId < len(threads); configId ++ {
+			thread := threads[configId]
+			step := steps[configId]
+
+			fmt.Printf("\t Parallel (%d, %d)\n", thread, step)
+			wstr := fmt.Sprintf("Parallel (thread, step) = (%d, %d)\n", thread, step)
+			writer.WriteString(wstr)
+
+			cycleTime := 10
+			for pp := 0; pp < cycleTime; pp ++ {
+				// deepcopy env
+				statedbt_tmp := statedbt.Copy()
+				txs_tmp := make([]*types.Transaction, tx_counter)
+				for i, tmp_tx := range txs{
+					ttx := types.NewTx(tmp_tx.TxInner())
+					txs_tmp[i] = ttx
+				}
+				
+				var wg sync.WaitGroup
+				flag = 0
+				s = time.Now().UnixNano()
+				for i := 0; i < thread; i ++ {
+					blockContext := NewEVMBlockContext(header, p.bc, nil)
+					flag = 1
+					wg.Add(1)
+					go func(t int) {
+						defer wg.Done()
+						var usedGast = new(uint64)
+						vmenvt := vm.NewEVM(blockContext, vm.TxContext{}, statedbt_tmp, p.config, cfg)
+						for j := t * step; j < t * step + step; j ++ {
+							msgt, _ := txs_tmp[j].AsMessage(types.MakeSigner(p.config, header.Number), header.BaseFee)
+							statedbt_tmp.Prepare(txs_tmp[j].Hash(), j)
+							_, _ = applyTransaction(msgt, p.config, p.bc, nil, gp, statedbt_tmp, blockNumber, blockHash, txs_tmp[j], usedGast, vmenvt)
+						}
+					}(i)
+				}
+				wg.Wait()
+				if flag==1 {
+					period := (time.Now().UnixNano()-s)/1000000
+					if pp > 0 {
+						fmt.Printf(", ")
+						writer.WriteString(", ")
+					}
+					fmt.Printf(strconv.Itoa(int(period)))
+					writer.WriteString(strconv.Itoa(int(period)))
+				}
+			}
+			writer.WriteString("\n")
+		}
 	}
 
-	
+	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
+	p.engine.Finalize(p.bc, header, statedb, block.Transactions(), block.Uncles())
 	
 	return receipts, allLogs, *usedGas, nil
 }
