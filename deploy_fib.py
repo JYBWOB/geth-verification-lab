@@ -35,4 +35,6 @@ tx_receipt = web3.eth.waitForTransactionReceipt(tx_hash)
 info = os.popen("geth --exec \"miner.stop()\" attach {}".format(Provider)).read()
 print("miner stop")
 print(tx_receipt.contractAddress)
+with open("tmpaddr.txt", "w") as f:
+    f.write(tx_receipt.contractAddress)
 

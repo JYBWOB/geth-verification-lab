@@ -17,7 +17,9 @@ lines = nameInfo.split('\n')
 BASE = 50000
 X = 1
 sendTime = 2
-addr = "0x6a2ff7ACDb3Ae8b1f343042fDb231101c0D75fB7"
+addr = ""
+with open("tmpaddr.txt") as f:
+    addr = f.read()
 abi = json.loads(lines[5])
 
 def getContract(addr, abi):

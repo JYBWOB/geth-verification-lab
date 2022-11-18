@@ -20,6 +20,7 @@
 data*/
 
 *.log
+tmpaddr.txt
 
 password.txt
 res.csv
