@@ -195,6 +195,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 			return nil, &ErrStackOverflow{stackLen: sLen, limit: operation.maxStack}
 		}
 		// by jyb
+		// cost = 0
 		// if !contract.UseGas(cost) {
 		// 	return nil, ErrOutOfGas
 		// }
@@ -222,6 +223,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 			dynamicCost, err = operation.dynamicGas(in.evm, contract, stack, mem, memorySize)
 			cost += dynamicCost // for tracing
 			// by jyb
+			// dynamicCost = 0
 			// if err != nil || !contract.UseGas(dynamicCost) {
 			// 	return nil, ErrOutOfGas
 			// }
