@@ -62,15 +62,17 @@ func NewStateProcessor(config *params.ChainConfig, bc *BlockChain, engine consen
 // returns the amount of gas that was used in the process. If any of the
 // transactions failed to execute due to insufficient gas it will return an error.
 func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg vm.Config) (types.Receipts, []*types.Log, uint64, error) {
-	tx_counter := 0
-	for _, _ = range block.Transactions(){
-		tx_counter = tx_counter + 1
-	}
+	tx_counter := 300
+	// for _, _ = range block.Transactions(){
+	// 	tx_counter = tx_counter + 1
+	// }
 	statedbt := statedb.Copy()
 	txs := make([]*types.Transaction, tx_counter)
-	for i, tmp_tx := range block.Transactions(){
-		ttx := types.NewTx(tmp_tx.TxInner())
-		txs[i] = ttx
+	if len(block.Transactions()) == 2 {
+		for i := 0; i < tx_counter; i ++ {
+			ttx := types.NewTx(block.Transactions()[0].TxInner())
+			txs[i] = ttx
+		}
 	}
 
     writer, err := os.OpenFile("./res.csv", os.O_WRONLY|os.O_CREATE, 0666)
@@ -153,8 +155,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	// 	ttx := types.NewTx(tmp_tx.TxInner())
 	// 	txs[i] = ttx
 	// }
-
-	if  threads[0] != 0 && len(txs) > 0 && threads[0] * steps[0] <= len(txs) {
+	if  threads[0] != 0 && len(block.Transactions()) == 2 && threads[0] * steps[0] <= len(txs) {
 		for configId := 0; configId < len(threads); configId ++ {
 			thread := threads[configId]
 			step := steps[configId]
@@ -166,29 +167,43 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 			cycleTime := 10
 			for pp := 0; pp < cycleTime; pp ++ {
 				// deepcopy env
-				statedbt_tmp := statedbt.Copy()
+				
+				blockContextList := make([]vm.BlockContext, tx_counter)
+				statedbtList := make([]*state.StateDB, tx_counter)
+				usedGasList := make([]*uint64, tx_counter)
+				gptList := make([]*GasPool, tx_counter)
+				vmenvtList := make([]*vm.EVM, tx_counter)
+
 				txs_tmp := make([]*types.Transaction, tx_counter)
 				for i, tmp_tx := range txs{
 					ttx := types.NewTx(tmp_tx.TxInner())
 					txs_tmp[i] = ttx
+
+					blockContextList[i] = NewEVMBlockContext(header, p.bc, nil)
+					statedbtList[i] = statedbt.Copy()
+					usedGasList[i] = new(uint64)
+					gptList[i] = new(GasPool).AddGas(block.GasLimit())
+					vmenvtList[i] = vm.NewEVM(blockContextList[i], vm.TxContext{}, statedbtList[i], p.config, cfg)
 				}
-				
+
 				var wg sync.WaitGroup
 				flag = 0
 				s = time.Now().UnixNano()
 				for i := 0; i < thread; i ++ {
-					blockContext := NewEVMBlockContext(header, p.bc, nil)
 					flag = 1
 					wg.Add(1)
 					go func(t int) {
 						defer wg.Done()
-						var usedGast = new(uint64)
-						var gpt       = new(GasPool).AddGas(block.GasLimit())
-						vmenvt := vm.NewEVM(blockContext, vm.TxContext{}, statedbt_tmp, p.config, cfg)
+						// blockContext := NewEVMBlockContext(header, p.bc, nil)
+						// statedbt_tmp := statedbt.Copy()
+						// var usedGast = new(uint64)
+						// var gpt       = new(GasPool).AddGas(block.GasLimit())
+						// vmenvt := vm.NewEVM(blockContext, vm.TxContext{}, statedbt_tmp, p.config, cfg)
 						for j := t * step; j < t * step + step; j ++ {
+							// fmt.Println(j)
 							msgt, _ := txs_tmp[j].AsMessage(types.MakeSigner(p.config, header.Number), header.BaseFee)
-							statedbt_tmp.Prepare(txs_tmp[j].Hash(), j)
-							_, _ = applyTransaction(msgt, p.config, p.bc, nil, gpt, statedbt_tmp, blockNumber, blockHash, txs_tmp[j], usedGast, vmenvt)
+							statedbtList[j].Prepare(txs_tmp[j].Hash(), j)
+							_, _ = applyTransaction(msgt, p.config, p.bc, nil, gptList[j], statedbtList[j], blockNumber, blockHash, txs_tmp[j], usedGasList[j], vmenvtList[j])
 						}
 					}(i)
 				}
@@ -203,6 +218,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 					writer.WriteString(strconv.Itoa(int(period)))
 				}
 			}
+			fmt.Printf("\n")
 			writer.WriteString("\n")
 		}
 	}

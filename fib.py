@@ -2,8 +2,9 @@ from web3 import Web3
 import os
 import json
 
+Provider = "http://127.0.0.1:30306"
 
-web3 = Web3(Web3.HTTPProvider("http://127.0.0.1:30306", request_kwargs={'timeout': 99999999}))
+web3 = Web3(Web3.HTTPProvider(Provider, request_kwargs={'timeout': 99999999}))
 print(web3.isConnected())
 
 account = web3.eth.accounts[0]
@@ -13,8 +14,10 @@ path = "contracts/Fib.sol"
 nameInfo = os.popen("solc --bin --abi {}".format(path)).read()
 lines = nameInfo.split('\n')
 
-sendTime = 300
-addr = "0xeB30eEeF24F7aAC488d706C2Cffcae71DBbb3349"
+BASE = 50000
+X = 1
+sendTime = 2
+addr = "0x6a2ff7ACDb3Ae8b1f343042fDb231101c0D75fB7"
 abi = json.loads(lines[5])
 
 def getContract(addr, abi):
@@ -26,15 +29,21 @@ con = getContract(addr, abi)
 pending = []
 for i in range(sendTime):
     print(i)
-    tx_hash = con.functions.exec(i, 50000).transact({
-                'from': account,
+    tx_hash = con.functions.exec(i, X * BASE).transact({
                 # 'nonce': web3.eth.getTransactionCount(account) + i,
-                'gas': 0xfffff + i,
-                'gasPrice': web3.toWei('21', 'gwei')
+                #'gas': 4700000,
+                #'gaslimit' : 0xffffffffffffffff,
+                #'gasPrice': web3.toWei('1', 'gwei'),
+                #'gasPrice': 1000000000,
+                'from': account
             })
     pending.append(tx_hash)
+
+info = os.popen("geth --exec \"miner.start()\" attach {}".format(Provider)).read()
+print("miner start")
 print("wait for receipt...")
 for i in range(sendTime):
     web3.eth.wait_for_transaction_receipt(pending[i])
     print("receive receipt {}".format(i))
-
+info = os.popen("geth --exec \"miner.stop()\" attach {}".format(Provider)).read()
+print("miner stop")

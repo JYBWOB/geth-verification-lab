@@ -23,7 +23,7 @@ import (
 	"math/big"
 	"sort"
 	"time"
-	"sync"
+	// "sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/rawdb"
@@ -46,7 +46,7 @@ var (
 	emptyRoot = common.HexToHash("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")
 )
 
-var mu sync.Mutex
+// var mu sync.Mutex
 
 type proofList [][]byte
 
@@ -563,9 +563,9 @@ func (s *StateDB) getDeletedStateObject(addr common.Address) *stateObject {
 }
 
 func (s *StateDB) setStateObject(object *stateObject) {
-	mu.Lock()
+	// mu.Lock()
 	s.stateObjects[object.Address()] = object
-	mu.Unlock()
+	// mu.Unlock()
 }
 
 // GetOrNewStateObject retrieves a state object or create a new state object if nil.
