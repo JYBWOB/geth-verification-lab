@@ -12,6 +12,11 @@
 **/go-ethereum/core/vm/*
 !**/go-ethereum/core/vm/interpreter.go
 
+!**/go-ethereum/core/state/
+**/go-ethereum/core/state/*
+!**/go-ethereum/core/state/statedb.go
+
+
 data*/
 
 *.log
