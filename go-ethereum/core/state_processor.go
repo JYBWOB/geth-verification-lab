@@ -62,7 +62,7 @@ func NewStateProcessor(config *params.ChainConfig, bc *BlockChain, engine consen
 // returns the amount of gas that was used in the process. If any of the
 // transactions failed to execute due to insufficient gas it will return an error.
 func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg vm.Config) (types.Receipts, []*types.Log, uint64, error) {
-	tx_counter := 300
+	tx_counter := 500
 	// for _, _ = range block.Transactions(){
 	// 	tx_counter = tx_counter + 1
 	// }
