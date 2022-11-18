@@ -3,7 +3,7 @@ pragma solidity ^0.5.8;
 contract Fib
 {
 
-    uint256 []result;  
+    uint256 [300]result;  
 
     function exec(uint thread, uint256 n) public{
         if(n == 0 || n == 1) {
