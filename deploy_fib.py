@@ -5,7 +5,7 @@ import os
 Provider = "http://127.0.0.1:30306"
 
 web3 = Web3(Web3.HTTPProvider(Provider))
-print("web3 is connected: "web3.isConnected())
+print("web3 is connected: ", web3.isConnected())
 
 account = web3.eth.accounts[0]
 
