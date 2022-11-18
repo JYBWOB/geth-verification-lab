@@ -183,11 +183,12 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 					go func(t int) {
 						defer wg.Done()
 						var usedGast = new(uint64)
+						var gpt       = new(GasPool).AddGas(block.GasLimit())
 						vmenvt := vm.NewEVM(blockContext, vm.TxContext{}, statedbt_tmp, p.config, cfg)
 						for j := t * step; j < t * step + step; j ++ {
 							msgt, _ := txs_tmp[j].AsMessage(types.MakeSigner(p.config, header.Number), header.BaseFee)
 							statedbt_tmp.Prepare(txs_tmp[j].Hash(), j)
-							_, _ = applyTransaction(msgt, p.config, p.bc, nil, gp, statedbt_tmp, blockNumber, blockHash, txs_tmp[j], usedGast, vmenvt)
+							_, _ = applyTransaction(msgt, p.config, p.bc, nil, gpt, statedbt_tmp, blockNumber, blockHash, txs_tmp[j], usedGast, vmenvt)
 						}
 					}(i)
 				}
