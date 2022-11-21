@@ -15,18 +15,26 @@ nameInfo = os.popen("solc --bin --abi {}".format(path)).read()
 lines = nameInfo.split('\n')
 
 BASE = 50000
-X = 1
+X = 7
 sendTime = 2
 addr = ""
 with open("tmpaddr.txt") as f:
     addr = f.read()
 abi = json.loads(lines[5])
 
+with open("res.csv", 'w') as f:
+    f.truncate(0)
+
 def getContract(addr, abi):
     c = web3.eth.contract(address=addr, abi=abi)
     return c
 
 con = getContract(addr, abi)
+
+# ==== 创建新账户 ====
+myAccount = w3.eth.account.create('put some extra entropy here')
+myAddress = myAccount.address
+# ==== ======== ====
 
 pending = []
 for i in range(sendTime):
