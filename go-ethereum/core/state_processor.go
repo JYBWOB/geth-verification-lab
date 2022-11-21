@@ -156,12 +156,11 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	// 	txs[i] = ttx
 	// }
 
-	
-	fmt.Printf("\t Parallel (thread, step)\n")
-	wstr := fmt.Sprintf("Parallel (thread, step)\n")
-	writer.WriteString(wstr)
-
 	if  threads[0] != 0 && len(block.Transactions()) == 2 && threads[0] * steps[0] <= len(txs) {
+		fmt.Printf("\t Parallel (thread, step)\n")
+		wstr := fmt.Sprintf("Parallel (thread, step)\n")
+		writer.WriteString(wstr)
+		
 		for configId := 0; configId < len(threads); configId ++ {
 			thread := threads[configId]
 			step := steps[configId]
