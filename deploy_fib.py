@@ -24,7 +24,7 @@ newContract = web3.eth.contract(bytecode=bin, abi=abi)
 # # 发起交易部署合约
 option = {'from': account, 'gas': 1000000}
 # web3.geth.personal.unlock_account(account, '123')
-tx_hash = newContract.constructor([b'dog', b'cat', b'bird']).transact(option)
+tx_hash = newContract.constructor().transact(option)
 print("deploy succeed, wait for miner")
 
 
