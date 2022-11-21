@@ -14,7 +14,7 @@ path = "contracts/KVstore.sol"
 nameInfo = os.popen("solc --bin --abi {}".format(path)).read()
 lines = nameInfo.split('\n')
 
-BASE = 50000
+BASE = 2000
 X = 1
 sendTime = 2
 addr = ""
