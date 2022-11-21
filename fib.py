@@ -32,8 +32,8 @@ def getContract(addr, abi):
 con = getContract(addr, abi)
 
 # ==== 创建新账户 ====
-myAccount = w3.eth.account.create('put some extra entropy here')
-myAddress = myAccount.address
+# myAccount = web3.eth.account.create('put some extra entropy here')
+# myAddress = myAccount.address
 # ==== ======== ====
 
 pending = []
