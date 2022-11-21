@@ -155,14 +155,20 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	// 	ttx := types.NewTx(tmp_tx.TxInner())
 	// 	txs[i] = ttx
 	// }
+
+	
+	fmt.Printf("\t Parallel (thread, step)\n")
+	wstr := fmt.Sprintf("Parallel (thread, step)\n")
+	writer.WriteString(wstr)
+
 	if  threads[0] != 0 && len(block.Transactions()) == 2 && threads[0] * steps[0] <= len(txs) {
 		for configId := 0; configId < len(threads); configId ++ {
 			thread := threads[configId]
 			step := steps[configId]
 
-			fmt.Printf("\t Parallel (%d, %d)\n", thread, step)
-			wstr := fmt.Sprintf("Parallel (thread, step) = (%d, %d)\n", thread, step)
+			wstr := fmt.Sprintf("(%d，%d)", thread, step)
 			writer.WriteString(wstr)
+			fmt.Printf(wstr)
 
 			cycleTime := 10
 			for pp := 0; pp < cycleTime; pp ++ {
@@ -210,10 +216,8 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 				wg.Wait()
 				if flag==1 {
 					period := (time.Now().UnixNano()-s)/1000000
-					if pp > 0 {
-						fmt.Printf(", ")
-						writer.WriteString(", ")
-					}
+					fmt.Printf(", ")
+					writer.WriteString(", ")
 					fmt.Printf(strconv.Itoa(int(period)))
 					writer.WriteString(strconv.Itoa(int(period)))
 				}
