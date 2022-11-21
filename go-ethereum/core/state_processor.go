@@ -166,7 +166,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 			thread := threads[configId]
 			step := steps[configId]
 
-			wstr := fmt.Sprintf("(%d，%d)", thread, step)
+			wstr := fmt.Sprintf("(%d, %d)", thread, step)
 			writer.WriteString(wstr)
 			fmt.Printf(wstr)
 
@@ -217,7 +217,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 				if flag==1 {
 					period := (time.Now().UnixNano()-s)/1000000
 					fmt.Printf(", ")
-					writer.WriteString(", ")
+					writer.WriteString("\t")
 					fmt.Printf(strconv.Itoa(int(period)))
 					writer.WriteString(strconv.Itoa(int(period)))
 				}
