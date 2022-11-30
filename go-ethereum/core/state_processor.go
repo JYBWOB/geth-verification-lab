@@ -150,7 +150,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	if err != nil {
 		fmt.Println("json 文件打开失败\n")
 	}
-	mMap := make(map[string][]int)
+	mMap := make(map[string]interface{})
 	err = json.Unmarshal(jsonData, &mMap)
 	if err != nil {
 		fmt.Println("json Unmarshal 失败")
@@ -160,8 +160,9 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
     //     fmt.Printf("%v\n", mMap["thread"])
     //     fmt.Printf("%v\n", mMap["step"])
     // }
-	threads := mMap["thread"]
-	steps := mMap["step"]
+	verfication_parallel := mMap["verfication_parallel"].(bool)
+	threads := mMap["thread"].([]interface{})
+	steps := mMap["step"].([]interface{})
 
 	// statedbt := statedb.Copy()
 	// txs := make([]*types.Transaction, tx_counter)
@@ -169,15 +170,16 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	// 	ttx := types.NewTx(tmp_tx.TxInner())
 	// 	txs[i] = ttx
 	// }
-
-	if  threads[0] != 0 && len(block.Transactions()) == 2 && threads[0] * steps[0] <= len(txs) {
+	t0 := int(threads[0].(float64))
+	s0 := int(steps[0].(float64))
+	if verfication_parallel && t0 != 0 && len(block.Transactions()) == 2 && t0 * s0 <= len(txs) {
 		fmt.Printf("\t Parallel (thread, step)\n")
 		wstr := fmt.Sprintf("Parallel (thread, step)\n")
 		writer.WriteString(wstr)
 		
 		for configId := 0; configId < len(threads); configId ++ {
-			thread := threads[configId]
-			step := steps[configId]
+			thread := int(threads[configId].(float64))
+			step := int(steps[configId].(float64))
 
 			wstr := fmt.Sprintf("(%d, %d)", thread, step)
 			writer.WriteString(wstr)
