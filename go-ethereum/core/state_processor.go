@@ -24,6 +24,7 @@ import (
 	"os"
 	"strconv"
 	"encoding/json"
+	"github.com/shirou/gopsutil/v3/cpu"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
@@ -80,6 +81,19 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
         fmt.Printf("打开文件错误= %v \n", err)
     }
 	defer writer.Close()
+
+	threadWrite, err := os.OpenFile("./percentCPU.csv", os.O_WRONLY|os.O_CREATE, 0666)
+    if err != nil {
+        fmt.Printf("打开文件错误= %v \n", err)
+    }
+	defer threadWrite.Close()
+
+	
+	threadAllWrite, err := os.OpenFile("./percentCPUAll.csv", os.O_WRONLY|os.O_CREATE, 0666)
+    if err != nil {
+        fmt.Printf("打开文件错误= %v \n", err)
+    }
+	defer threadAllWrite.Close()
 
 	/* -------------- serial part -------------- */
 	var (
@@ -167,6 +181,9 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 
 			wstr := fmt.Sprintf("(%d, %d)", thread, step)
 			writer.WriteString(wstr)
+			threadWrite.WriteString(wstr)
+			threadAllWrite.WriteString(wstr)
+			threadAllWrite.WriteString("\n")
 			fmt.Printf(wstr)
 
 			cycleTime := 10
@@ -212,8 +229,21 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 						}
 					}(i)
 				}
+				// time.Sleep(time.Duration(5)*time.Millisecond)
+				percent1, _ := cpu.Percent(0, true)
+				percent2, _ := cpu.Percent(0, false)
 				wg.Wait()
 				if flag==1 {
+
+					for i := 0; i < len(percent1); i++ {
+						threadAllWrite.WriteString("\t")
+						threadAllWrite.WriteString(strconv.FormatFloat(percent1[i], 'f', 2, 32))
+					}
+					threadAllWrite.WriteString("\n")
+
+					threadWrite.WriteString("\t")
+					threadWrite.WriteString(strconv.FormatFloat(percent2[0], 'f', 2, 32))
+
 					period := (time.Now().UnixNano()-s)/1000000
 					fmt.Printf(", ")
 					writer.WriteString("\t")
@@ -223,6 +253,8 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 			}
 			fmt.Printf("\n")
 			writer.WriteString("\n")
+			threadWrite.WriteString("\n")
+			threadAllWrite.WriteString("\n")
 		}
 	}
 
