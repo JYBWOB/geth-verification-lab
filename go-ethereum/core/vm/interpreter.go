@@ -17,6 +17,15 @@
 package vm
 
 import (
+	"fmt"
+	"os"
+	"strconv"
+	"sync"
+	// "sync/atomic"
+	"time"
+	//"encoding/binary"
+	"github.com/shirou/gopsutil/v3/cpu"
+
 	"hash"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -62,6 +71,10 @@ type EVMInterpreter struct {
 
 	readOnly   bool   // Whether to throw on stateful modifications
 	returnData []byte // Last CALL's return data for subsequent reuse
+
+	// jyb
+	wg sync.WaitGroup
+	// output_flag int32
 }
 
 // NewEVMInterpreter returns a new instance of the Interpreter.
@@ -114,6 +127,14 @@ func NewEVMInterpreter(evm *EVM, cfg Config) *EVMInterpreter {
 // considered a revert-and-consume-all-gas operation except for
 // ErrExecutionReverted which means revert-and-keep-gas-left.
 func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (ret []byte, err error) {
+	// jyb
+	threadAllWrite, err := os.OpenFile("./percentCPUAllIn.csv", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+        fmt.Printf("打开文件错误= %v \n", err)
+    }
+	defer threadAllWrite.Close()
+	s:=time.Now().UnixNano()
+	// atomic.StoreInt32(&in.output_flag, 0)
 
 	// Increment the call depth which is restricted to 1024
 	in.evm.depth++
@@ -250,6 +271,20 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 	if err == errStopToken {
 		err = nil // clear stop token error
 	}
+
+	// jyb
+	percent1, _ := cpu.Percent(0, true)
+	// percent2, _ := cpu.Percent(0, false)
+	in.wg.Wait()
+	// if atomic.LoadInt32(&in.output_flag) > 0 {
+	// 	fmt.Printf("Execution needs: %v ms\n",(time.Now().UnixNano()-s)/1000000)
+	// }
+	for i := 0; i < len(percent1); i++ {
+		threadAllWrite.WriteString("\t")
+		threadAllWrite.WriteString(strconv.FormatFloat(percent1[i], 'f', 2, 32))
+	}
+	threadAllWrite.WriteString("\n")
+	fmt.Printf("%v\n",(time.Now().UnixNano()-s)/1000000)
 
 	return res, err
 }

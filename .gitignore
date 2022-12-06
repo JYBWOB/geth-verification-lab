@@ -10,7 +10,9 @@
 
 !**/go-ethereum/core/vm
 **/go-ethereum/core/vm/*
+!**/go-ethereum/core/vm/instructions.go
 !**/go-ethereum/core/vm/interpreter.go
+!**/go-ethereum/core/vm/parallel.go
 
 !**/go-ethereum/core/state/
 **/go-ethereum/core/state/*
