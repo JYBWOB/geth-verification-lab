@@ -132,15 +132,15 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		allLogs = append(allLogs, receipt.Logs...)
 	}
 
-	if flag==1 {
-		period := (time.Now().UnixNano()-s)/1000000
+	// if flag==1 {
+	// 	period := (time.Now().UnixNano()-s)/1000000
 
-		fmt.Printf("\t Serial : %v ms\n", period)
-		wstr := fmt.Sprintf("Tx nums: %d Serial :\n", tx_counter)
-		writer.WriteString(wstr)
-		writer.WriteString(strconv.Itoa(int(period)))
-		writer.WriteString("\n")
-	}
+	// 	fmt.Printf("\t Serial : %v ms\n", period)
+	// 	wstr := fmt.Sprintf("Tx nums: %d Serial :\n", tx_counter)
+	// 	writer.WriteString(wstr)
+	// 	writer.WriteString(strconv.Itoa(int(period)))
+	// 	writer.WriteString("\n")
+	// }
 	
 	/* -------------- serial part -------------- */
 
