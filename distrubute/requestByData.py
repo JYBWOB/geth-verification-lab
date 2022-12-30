@@ -4,7 +4,7 @@ import json
 import sys
 import random
 
-sendTime = 500
+sendTime = int(sys.argv[1])
 
 Provider = "http://127.0.0.1:30306"
 
@@ -13,12 +13,12 @@ print(web3.isConnected())
 
 account = web3.eth.accounts[0]
 
-path = "./total.sol"
+path = "./parallel_schedule.sol"
 
 nameInfo = os.popen("solc --bin --abi {} -o compile --overwrite".format(path)).read()
 lines = nameInfo.split('\n')
 
-addr = "0x695af2772b5E711b9c63E62Bd60e44F0D7270C86"
+addr = "0xD475fb6358884B928cf70931a60288F1bF1c0845"
 abi = {}
 with open("compile/Schedule.abi") as f:
     abi = json.loads(f.read())
@@ -55,7 +55,7 @@ pending = []
 for i in range(sendTime):
     _in_addr = random_hex(40)
     print(_in_addr)
-    tx_hash = con.functions.requests(_in_addr, taskList[i], 0, 1).transact({
+    tx_hash = con.functions.requests(_in_addr, taskList[i]).transact({
                 # 'nonce': web3.eth.getTransactionCount(account) + i,
                 'gas': 4700000,
                 'gaslimit' : 0xffffffffffffffff,

@@ -74,8 +74,8 @@ contract Lpd is ExecContract
         return exec_part(2, prime);
     }
 
-    function sqrt(uint256 _x) public pure returns(uint) {
-      return _x / 2;
+    function sqrt(uint256 x) public pure returns(uint) {
+      return x / 2;
       // uint z = (x + 1 ) / 2;
       // uint y = z;
       // while(z < y){
@@ -85,9 +85,9 @@ contract Lpd is ExecContract
       // return y;
     }
 
-    function is_prime(uint256 _x) public pure returns(bool) {
-      for(uint k = 2; k <= sqrt(_x); k++) {
-        if(_x % k == 0) {
+    function is_prime(uint256 x) public pure returns(bool) {
+      for(uint k = 2; k <= sqrt(x); k++) {
+        if(x % k == 0) {
           return false;
         }
       }
@@ -431,8 +431,7 @@ contract Schedule
         uint index = 0;
         for (uint i = IterableMapTask.iterate_start(tasks); IterableMapTask.iterate_valid(tasks, i); i = IterableMapTask.iterate_next(tasks, i))
         {
-            // (address key, address task, uint value, uint start, uint end)  = IterableMapTask.iterate_get(tasks, i);
-            (address key, , uint value, uint start, uint end)  = IterableMapTask.iterate_get(tasks, i);
+            (address key, address task, uint value, uint start, uint end)  = IterableMapTask.iterate_get(tasks, i);
             keys[index] = key;
             values[index] = value;
             starts[index] = start;
@@ -495,42 +494,58 @@ contract Schedule
         }
     }
 
-    function scheduleByIndex(uint s, uint e) public {
-      for(uint i = s; i < e; i++) {
-        // (address tkey, address taddr, uint tvalue, uint start, uint end) = IterableMapTask.iterate_get(tasks, i);
-        (address tkey, , uint tvalue, , ) = IterableMapTask.iterate_get(tasks, i);
-  
-        address miniaddr = address(0);
-        uint mini = 0;
+    function scheduleByIndex(uint i) public {
+        (address tkey, address taddr, uint tvalue, uint start, uint end) = IterableMapTask.iterate_get(tasks, i);
+        if(tvalue == 0) 
+        {
+            return;
+        }
+        address[10] memory distributeList;
+        uint[10] memory valueList;
+        uint[10] memory startList;
+        uint[10] memory endList;
+        uint index = 0;
+        uint len = end - start;
         for (uint j = IterableMapInt.iterate_start(resources); IterableMapInt.iterate_valid(resources, j); j = IterableMapInt.iterate_next(resources, j))
         {
-          (address rkey, uint256 rvalue) = IterableMapInt.iterate_get(resources, j);
-          if(rvalue == 0) 
-          {
-              continue;
-          }
-          if(rvalue >= tvalue && rvalue < mini)
-          {
-            miniaddr = rkey;
-            mini = rvalue;
-          }
-          IterableMapInt.insert(resources, miniaddr, 0);
-          IterableMapTask.insert(tasks, tkey, tkey, 0, 0, 0);
+            (address rkey, uint256 rvalue) = IterableMapInt.iterate_get(resources, j);
+            if(rvalue == 0) 
+            {
+                continue;
+            }
+            uint callen = len * rvalue / tvalue;
+            if(start + callen > end)
+            {
+              callen = end - start;
+            }
+            distributeList[index] = rkey;
+            valueList[index] = callen * tvalue / len;
+            startList[index] = start;
+            endList[index] = start + callen;
+            index += 1;
+            start += callen;
+            if(start == end) {
+              break;
+            }
         }
-      }
+        if(start == end) {
+          for(uint j = 0; j < index; j++) {
+            IterableMapTask.insert(distrubute, distributeList[j], taddr, valueList[j], startList[j], endList[j]);
+            IterableMapInt.insert(resources, distributeList[j], 0);
+          }
+          IterableMapAddrList.insert(pending, taddr, distributeList);
+          IterableMapTask.insert(tasks, tkey, tkey, 0, end, end);
+        }
     }
 
-    function scheduleParallel(uint threads) public {
-      uint step = tasks.size / threads;
-      for (uint i = 0; i < threads; i++) {
-        uint s = step * i;
-        uint e = s + step;
-        assembly {
-            mstore(600, s)
-            mstore(700, e)
-            mstore(100, 0)
+    function scheduleParallel() public {
+        for (uint i = IterableMapTask.iterate_start(tasks); IterableMapTask.iterate_valid(tasks, i); i = IterableMapTask.iterate_next(tasks, i))
+        {
+            assembly {
+                mstore(600, i)
+                mstore(100, 0)
+            }
         }
-      }
     }
 
 
