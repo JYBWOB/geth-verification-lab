@@ -541,14 +541,18 @@ func opMstore(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 		}
 		// fmt.Println("input:", input)
 		
-		// index := scope.Memory.GetPtr(600, 32)
-		// fmt.Println("index:", index)
-		// for i:=0; i<len(index); i++ {
-		// 	input = append(input, index[i])
-		// }
+		paramList := mMap["paramAddr"].([]interface{})
+		for i := 0; i < len(paramList); i++ {
+			index := scope.Memory.GetPtr(int64(paramList[i].(float64)), 32)
+			for i:=0; i<len(index); i++ {
+				input = append(input, index[i])
+			}
+		}
+		// fmt.Println("inputs: ", input)
+		
 		
 		// count := scope.Memory.GetPtr(700, 32)
-		//fmt.Println("count:", count)
+		// fmt.Println("count:", count)
 		// for i:=0; i<len(count); i++ {
 		// 	input = append(input, count[i])
 		// }
