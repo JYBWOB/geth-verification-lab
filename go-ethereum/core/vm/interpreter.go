@@ -127,6 +127,7 @@ func NewEVMInterpreter(evm *EVM, cfg Config) *EVMInterpreter {
 // considered a revert-and-consume-all-gas operation except for
 // ErrExecutionReverted which means revert-and-keep-gas-left.
 func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (ret []byte, err error) {
+	// fmt.Println("correct: ", input)
 	// jyb
 	threadAllWrite, err := os.OpenFile("./percentCPUAllIn.csv", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -279,12 +280,12 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 	// if atomic.LoadInt32(&in.output_flag) > 0 {
 	// 	fmt.Printf("Execution needs: %v ms\n",(time.Now().UnixNano()-s)/1000000)
 	// }
+	fmt.Printf("%v\n",(time.Now().UnixNano()-s)/1000000)
 	for i := 0; i < len(percent1); i++ {
 		threadAllWrite.WriteString("\t")
 		threadAllWrite.WriteString(strconv.FormatFloat(percent1[i], 'f', 2, 32))
 	}
 	threadAllWrite.WriteString("\n")
-	fmt.Printf("%v\n",(time.Now().UnixNano()-s)/1000000)
 
 	return res, err
 }
