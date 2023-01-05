@@ -50,9 +50,42 @@ var (
 	errInvalidSealResult = errors.New("invalid or stale proof-of-work solution")
 )
 
+// jyb
+var (
+	// young			= [10]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	young			= [10]int{1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+	old				= [10]int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	count			= 10
+)
 // Seal implements consensus.Engine, attempting to find a nonce that satisfies
 // the block's difficulty requirements.
 func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
+	// jyb
+	id := 1
+	index := -1
+	for i := 0; i < 10; i++ {
+		if young[i] != 0 && young[i] == id {
+			index = i
+			break
+		}
+	}
+	if index == -1 {
+		return nil
+	}
+	old[10 - count] = young[index]
+	young[index] = 0
+	count --
+	if count == 0 {
+		count = 10
+		for i := 0; i < 10; i++ {
+			// young[i] = i + 1
+			young[i] = 1
+			old[i] = 0
+		}
+	}
+	
+	fmt.Println(young, old, count)
+
 	// If we're running a fake PoW, simply return a 0 nonce immediately
 	if ethash.config.PowMode == ModeFake || ethash.config.PowMode == ModeFullFake {
 		header := block.Header()
