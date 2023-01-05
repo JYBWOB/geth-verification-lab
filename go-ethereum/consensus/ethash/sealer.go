@@ -98,18 +98,18 @@ func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block
 	)
 	// jyb
 	s := time.Now().UnixNano()
-	// pend.Add(1)
-	// go func(id int, nonce uint64) {
-	// 	defer pend.Done()
-	// 	ethash.mine_poc(block, id, nonce, abort, locals)
-	// }(0, uint64(ethash.rand.Int63()))
-	for i := 0; i < threads; i++ {
-		pend.Add(1)
-		go func(id int, nonce uint64) {
-			defer pend.Done()
-			ethash.mine(block, id, nonce, abort, locals)
-		}(i, uint64(ethash.rand.Int63()))
-	}
+	pend.Add(1)
+	go func(id int, nonce uint64) {
+		defer pend.Done()
+		ethash.mine_poc(block, id, nonce, abort, locals)
+	}(0, uint64(ethash.rand.Int63()))
+	// for i := 0; i < threads; i++ {
+	// 	pend.Add(1)
+	// 	go func(id int, nonce uint64) {
+	// 		defer pend.Done()
+	// 		ethash.mine(block, id, nonce, abort, locals)
+	// 	}(i, uint64(ethash.rand.Int63()))
+	// }
 
 	// Wait until sealing is terminated or a nonce is found
 	go func() {
