@@ -175,22 +175,22 @@ func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block
 
 	
 	// pow cpu percent
-	percent1, _ := cpu.Percent(0, true)
-	threadAllWrite, err := os.OpenFile("./percentCPUAllIn.csv", os.O_WRONLY|os.O_APPEND, 0666)
-    if err != nil {
-        fmt.Printf("打开文件错误= %v \n", err)
-    }
-	defer threadAllWrite.Close()
-	write := bufio.NewWriter(threadAllWrite)
-	for i := 0; i < len(percent1); i++ {
-		write.WriteString("\t")
-		write.WriteString(strconv.FormatFloat(percent1[i], 'f', 2, 32))
-	}
-	write.WriteString("\n")
-	write.Flush()
+	// percent1, _ := cpu.Percent(0, true)
+	// threadAllWrite, err := os.OpenFile("./percentCPUAllIn.csv", os.O_WRONLY|os.O_APPEND, 0666)
+    // if err != nil {
+    //     fmt.Printf("打开文件错误= %v \n", err)
+    // }
+	// defer threadAllWrite.Close()
+	// write := bufio.NewWriter(threadAllWrite)
+	// for i := 0; i < len(percent1); i++ {
+	// 	write.WriteString("\t")
+	// 	write.WriteString(strconv.FormatFloat(percent1[i], 'f', 2, 32))
+	// }
+	// write.WriteString("\n")
+	// write.Flush()
 
 
-	// ethash.poc(block)
+	ethash.poc(block)
 
 	// If we're running a fake PoW, simply return a 0 nonce immediately
 	if ethash.config.PowMode == ModeFake || ethash.config.PowMode == ModeFullFake {
