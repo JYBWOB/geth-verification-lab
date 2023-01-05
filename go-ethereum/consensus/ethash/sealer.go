@@ -33,7 +33,9 @@ import (
 	// jyb
 	"fmt"
 	"strconv"
-	// "github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"os"
+	"bufio"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -53,7 +55,7 @@ var (
 
 // jyb
 var (
-	domains			= 100
+	domains			= 400
 	count			= domains
 	// young			= [10]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 	// old				= [10]int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -105,20 +107,70 @@ func (ethash *Ethash) poc(block *types.Block) {
 	fmt.Printf(" ns\n")
 }
 
+func (ethash *Ethash) poc_no_output(block *types.Block) {
+	// jyb
+	if needInit {
+		needInit = false
+		for i := 0; i < domains; i ++ {
+			young[i] = domains - i
+			old[i] = 0
+		}
+	}
+	id_index := 0
+	maxi_index := 0
+	for i := 0; i < domains; i++ {
+		if young[i] > young[maxi_index] {
+			maxi_index = i
+		}
+	}
+	if maxi_index == id_index {
+		old[id_index] = young[id_index]
+		// young[id_index] = -1
+		count --
+		if count == 0 {
+			count = domains
+			for i := 0; i < domains; i++ {
+				young[i] = old[i]
+				old[i] = 0
+			}
+		}
+	}
+	// hash    = ethash.SealHash(header).Bytes()
+	ethash.SealHash(block.Header()).Bytes()
+}
+
+func (ethash *Ethash) pocCPUPercent(block *types.Block) {
+	percent1, _ := cpu.Percent(time.Duration(1 * time.Second), true)
+	go func(block *types.Block) {
+		for i := 0; i < 200000; i++ {
+			ethash.poc_no_output(block)
+		}
+	}(block)
+
+	threadAllWrite, err := os.OpenFile("./percentCPUAllIn.csv", os.O_WRONLY|os.O_APPEND, 0666)
+    if err != nil {
+        fmt.Printf("打开文件错误= %v \n", err)
+    }
+	defer threadAllWrite.Close()
+	write := bufio.NewWriter(threadAllWrite)
+	for i := 0; i < len(percent1); i++ {
+		write.WriteString("\t")
+		write.WriteString(strconv.FormatFloat(percent1[i], 'f', 2, 32))
+	}
+	write.WriteString("\n")
+	write.Flush()
+}
+
 // Seal implements consensus.Engine, attempting to find a nonce that satisfies
 // the block's difficulty requirements.
 func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
 	// jyb
-	// percent1, _ := cpu.Percent(time.Duration(1 * time.Second), true)
-	// fmt.Print("\n")
-	// for i := 0; i < 200000; i++ {
-	// 	ethash.pocPercentCPU(block)
-	// }
-	// for i := 0; i < len(percent1); i++ {
-	// 	fmt.Print("\t")
-	// 	fmt.Print(strconv.FormatFloat(percent1[i], 'f', 2, 32))
-	// }
-	// time.Sleep(5 * time.Second)
+	for i := 0; i < 10; i++ {
+		ethash.pocCPUPercent(block)
+	}
+	fmt.Println("poc CPU Percent finished")
+	time.Sleep(10 * time.Second)
+
 
 	ethash.poc(block)
 
