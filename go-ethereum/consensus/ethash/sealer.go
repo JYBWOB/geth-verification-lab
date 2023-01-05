@@ -33,6 +33,7 @@ import (
 	// jyb
 	"fmt"
 	"strconv"
+	// "github.com/shirou/gopsutil/v3/cpu"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -52,7 +53,7 @@ var (
 
 // jyb
 var (
-	domains			= 400
+	domains			= 100
 	count			= domains
 	// young			= [10]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 	// old				= [10]int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -60,9 +61,10 @@ var (
 	old				= make([]int, domains)
 	needInit		= true
 )
-// Seal implements consensus.Engine, attempting to find a nonce that satisfies
-// the block's difficulty requirements.
-func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
+
+// jyb
+func (ethash *Ethash) poc(block *types.Block) {
+	// jyb
 	if needInit {
 		fmt.Println("domains: ", domains)
 		fmt.Println("-----------------------")
@@ -72,7 +74,6 @@ func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block
 			old[i] = 0
 		}
 	}
-	// jyb
 	sc := time.Now().UnixNano()
 	id_index := 0
 	maxi_index := 0
@@ -97,9 +98,29 @@ func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block
 	ethash.SealHash(block.Header()).Bytes()
 
 	periodC := time.Now().UnixNano()-sc
+
+	// strconv.Itoa(int(periodC))
 	fmt.Printf("POC time: ")
 	fmt.Printf(strconv.Itoa(int(periodC)))
 	fmt.Printf(" ns\n")
+}
+
+// Seal implements consensus.Engine, attempting to find a nonce that satisfies
+// the block's difficulty requirements.
+func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
+	// jyb
+	// percent1, _ := cpu.Percent(time.Duration(1 * time.Second), true)
+	// fmt.Print("\n")
+	// for i := 0; i < 200000; i++ {
+	// 	ethash.pocPercentCPU(block)
+	// }
+	// for i := 0; i < len(percent1); i++ {
+	// 	fmt.Print("\t")
+	// 	fmt.Print(strconv.FormatFloat(percent1[i], 'f', 2, 32))
+	// }
+	// time.Sleep(5 * time.Second)
+
+	ethash.poc(block)
 
 	// If we're running a fake PoW, simply return a 0 nonce immediately
 	if ethash.config.PowMode == ModeFake || ethash.config.PowMode == ModeFullFake {
@@ -146,6 +167,7 @@ func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block
 	)
 	// jyb
 	s := time.Now().UnixNano()
+
 	// pend.Add(1)
 	// go func(id int, nonce uint64) {
 	// 	defer pend.Done()
