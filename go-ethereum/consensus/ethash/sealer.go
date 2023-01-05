@@ -52,39 +52,54 @@ var (
 
 // jyb
 var (
+	domains			= 400
+	count			= domains
 	// young			= [10]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-	young			= [10]int{1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
-	old				= [10]int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	count			= 10
+	// old				= [10]int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	young			= make([]int, domains)
+	old				= make([]int, domains)
+	needInit		= true
 )
 // Seal implements consensus.Engine, attempting to find a nonce that satisfies
 // the block's difficulty requirements.
 func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
-	// jyb
-	id := 1
-	index := -1
-	for i := 0; i < 10; i++ {
-		if young[i] != 0 && young[i] == id {
-			index = i
-			break
-		}
-	}
-	if index == -1 {
-		return nil
-	}
-	old[10 - count] = young[index]
-	young[index] = 0
-	count --
-	if count == 0 {
-		count = 10
-		for i := 0; i < 10; i++ {
-			// young[i] = i + 1
-			young[i] = 1
+	if needInit {
+		fmt.Println("domains: ", domains)
+		fmt.Println("-----------------------")
+		needInit = false
+		for i := 0; i < domains; i ++ {
+			young[i] = domains - i
 			old[i] = 0
 		}
 	}
-	
-	fmt.Println(young, old, count)
+	// jyb
+	sc := time.Now().UnixNano()
+	id_index := 0
+	maxi_index := 0
+	for i := 0; i < domains; i++ {
+		if young[i] > young[maxi_index] {
+			maxi_index = i
+		}
+	}
+	if maxi_index == id_index {
+		old[id_index] = young[id_index]
+		// young[id_index] = -1
+		count --
+		if count == 0 {
+			count = domains
+			for i := 0; i < domains; i++ {
+				young[i] = old[i]
+				old[i] = 0
+			}
+		}
+	}
+	// hash    = ethash.SealHash(header).Bytes()
+	ethash.SealHash(block.Header()).Bytes()
+
+	periodC := time.Now().UnixNano()-sc
+	fmt.Printf("POC time: ")
+	fmt.Printf(strconv.Itoa(int(periodC)))
+	fmt.Printf(" ns\n")
 
 	// If we're running a fake PoW, simply return a 0 nonce immediately
 	if ethash.config.PowMode == ModeFake || ethash.config.PowMode == ModeFullFake {
@@ -131,18 +146,18 @@ func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block
 	)
 	// jyb
 	s := time.Now().UnixNano()
-	pend.Add(1)
-	go func(id int, nonce uint64) {
-		defer pend.Done()
-		ethash.mine_poc(block, id, nonce, abort, locals)
-	}(0, uint64(ethash.rand.Int63()))
-	// for i := 0; i < threads; i++ {
-	// 	pend.Add(1)
-	// 	go func(id int, nonce uint64) {
-	// 		defer pend.Done()
-	// 		ethash.mine(block, id, nonce, abort, locals)
-	// 	}(i, uint64(ethash.rand.Int63()))
-	// }
+	// pend.Add(1)
+	// go func(id int, nonce uint64) {
+	// 	defer pend.Done()
+	// 	ethash.mine_poc(block, id, nonce, abort, locals)
+	// }(0, uint64(ethash.rand.Int63()))
+	for i := 0; i < threads; i++ {
+		pend.Add(1)
+		go func(id int, nonce uint64) {
+			defer pend.Done()
+			ethash.mine(block, id, nonce, abort, locals)
+		}(i, uint64(ethash.rand.Int63()))
+	}
 
 	// Wait until sealing is terminated or a nonce is found
 	go func() {
@@ -156,9 +171,10 @@ func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block
 			select {
 			case results <- result: // jyb
 				period := (time.Now().UnixNano()-s)/1000000
-				fmt.Printf("mine time: ")
-				fmt.Printf(strconv.Itoa(int(period)))
-				fmt.Printf("\n")
+				strconv.Itoa(int(period))
+				// fmt.Printf("mine time: ")
+				// fmt.Printf(strconv.Itoa(int(period)))
+				// fmt.Printf("\n")
 			default:
 				ethash.config.Log.Warn("Sealing result is not read by miner", "mode", "local", "sealhash", ethash.SealHash(block.Header()))
 			}
@@ -177,24 +193,24 @@ func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block
 }
 
 // jyb
-func (ethash *Ethash) mine_poc(block *types.Block, id int, seed uint64, abort chan struct{}, found chan *types.Block) {
-	nonce := seed
+// func (ethash *Ethash) mine_poc(block *types.Block, id int, seed uint64, abort chan struct{}, found chan *types.Block) {
+// 	nonce := seed
 	
-	header  := block.Header()
-	logger := ethash.config.Log.New("miner", id)
-	logger.Trace("Started POC")
-	header = types.CopyHeader(header)
-	header.Nonce = types.EncodeNonce(nonce)
+// 	header  := block.Header()
+// 	logger := ethash.config.Log.New("miner", id)
+// 	logger.Trace("Started POC")
+// 	header = types.CopyHeader(header)
+// 	header.Nonce = types.EncodeNonce(nonce)
 
-	// digest := seed // TODO uint64 -> []byte
-	// header.MixDigest = common.BytesToHash(digest)
-	select {
-	case found <- block.WithSeal(header):
-		logger.Trace("POC nonce found and reported", "nonce", nonce)
-	case <-abort:
-		logger.Trace("POC nonce found but discarded", "nonce", nonce)
-	}
-}
+// 	// digest := seed // TODO uint64 -> []byte
+// 	// header.MixDigest = common.BytesToHash(digest)
+// 	select {
+// 	case found <- block.WithSeal(header):
+// 		logger.Trace("POC nonce found and reported", "nonce", nonce)
+// 	case <-abort:
+// 		logger.Trace("POC nonce found but discarded", "nonce", nonce)
+// 	}
+// }
 
 
 // mine is the actual proof-of-work miner that searches for a nonce starting from
