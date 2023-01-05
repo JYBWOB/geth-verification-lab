@@ -97,7 +97,7 @@ func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block
 		locals = make(chan *types.Block)
 	)
 	// jyb
-	// s := time.Now().UnixNano()
+	s := time.Now().UnixNano()
 	// pend.Add(1)
 	// go func(id int, nonce uint64) {
 	// 	defer pend.Done()
