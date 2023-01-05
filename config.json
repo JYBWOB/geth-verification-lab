@@ -1,7 +1,8 @@
 {
     "verfication_parallel": true,
-    "thread": [300],
-    "step": [1],
+    "mstore_parallel": false,
+    "thread": [1, 300],
+    "step": [300, 1],
     "selector": "e049dbef",
     "paramAddr": [600, 700, 800]
 }
