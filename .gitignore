@@ -21,6 +21,14 @@
 # !**/go-ethereum/core/state/state_object.go
 
 
+go-ethereum/consensus/ethash/sealer.go
+!**/go-ethereum/consensus/
+**/go-ethereum/consensus/*
+!**/go-ethereum/consensus/ethash/
+**/go-ethereum/consensus/ethash/*
+!**/go-ethereum/consensus/ethash/sealer.go
+
+
 data*/
 
 *.log
