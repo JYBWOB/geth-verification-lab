@@ -55,7 +55,7 @@ var (
 
 // jyb
 var (
-	domains			= 400
+	domains			= 100
 	count			= domains
 	// young			= [10]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 	// old				= [10]int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -165,14 +165,32 @@ func (ethash *Ethash) pocCPUPercent(block *types.Block) {
 // the block's difficulty requirements.
 func (ethash *Ethash) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
 	// jyb
-	for i := 0; i < 10; i++ {
-		ethash.pocCPUPercent(block)
+
+	// poc cpu percent
+	// for i := 0; i < 10; i++ {
+	// 	ethash.pocCPUPercent(block)
+	// }
+	// fmt.Println("poc CPU Percent finished")
+	// time.Sleep(10 * time.Second)
+
+	
+	// pow cpu percent
+	percent1, _ := cpu.Percent(0, true)
+	threadAllWrite, err := os.OpenFile("./percentCPUAllIn.csv", os.O_WRONLY|os.O_APPEND, 0666)
+    if err != nil {
+        fmt.Printf("打开文件错误= %v \n", err)
+    }
+	defer threadAllWrite.Close()
+	write := bufio.NewWriter(threadAllWrite)
+	for i := 0; i < len(percent1); i++ {
+		write.WriteString("\t")
+		write.WriteString(strconv.FormatFloat(percent1[i], 'f', 2, 32))
 	}
-	fmt.Println("poc CPU Percent finished")
-	time.Sleep(10 * time.Second)
+	write.WriteString("\n")
+	write.Flush()
 
 
-	ethash.poc(block)
+	// ethash.poc(block)
 
 	// If we're running a fake PoW, simply return a 0 nonce immediately
 	if ethash.config.PowMode == ModeFake || ethash.config.PowMode == ModeFullFake {
