@@ -1437,7 +1437,12 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals, setHead bool)
 		headers[i] = block.Header()
 		seals[i] = verifySeals
 	}
+	// jyb
+	s := time.Now().UnixNano()
 	abort, results := bc.engine.VerifyHeaders(bc, headers, seals)
+	period := (time.Now().UnixNano()-s)
+	fmt.Printf("verfy headers time: %v \n", period)
+
 	defer close(abort)
 
 	// Peek the error for the first block to decide the directing import logic
