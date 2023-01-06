@@ -4,6 +4,7 @@
 **/go-ethereum/core/*
 !**/go-ethereum/core/state_processor.go*
 !**/go-ethereum/core/gaspool.go
+!**/go-ethereum/core/blockchain.go
 
 !**/go-ethereum/core/types
 **/go-ethereum/core/types/*
