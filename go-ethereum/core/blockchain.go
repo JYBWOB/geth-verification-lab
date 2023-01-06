@@ -1438,37 +1438,37 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals, setHead bool)
 		seals[i] = verifySeals
 	}
 	// jyb
-	var (
-		domains			= 400
-		count			= domains
-		// young			= [10]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-		// old				= [10]int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-		young			= make([]int, domains)
-		old				= make([]int, domains)
-	)
-	for i := 0; i < domains; i ++ {
-		young[i] = domains - i
-		old[i] = 0
-	}
-	sc := time.Now().UnixNano()
-	maxi_index := 0
-	for i := 0; i < domains; i++ {
-		if young[i] > young[maxi_index] {
-			maxi_index = i
-		}
-	}
-	bc.engine.SealHash(headers[0]).Bytes()
-	old[maxi_index] = young[maxi_index]
-	count --
-	if count == 0 {
-		count = domains
-		for i := 0; i < domains; i++ {
-			young[i] = old[i]
-			old[i] = 0
-		}
-	}
-	periodC := time.Now().UnixNano()-sc
-	fmt.Printf("poc verfy headers time: %v \n", periodC)
+	// var (
+	// 	domains			= 400
+	// 	count			= domains
+	// 	// young			= [10]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	// 	// old				= [10]int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	// 	young			= make([]int, domains)
+	// 	old				= make([]int, domains)
+	// )
+	// for i := 0; i < domains; i ++ {
+	// 	young[i] = domains - i
+	// 	old[i] = 0
+	// }
+	// sc := time.Now().UnixNano()
+	// maxi_index := 0
+	// for i := 0; i < domains; i++ {
+	// 	if young[i] > young[maxi_index] {
+	// 		maxi_index = i
+	// 	}
+	// }
+	// bc.engine.SealHash(headers[0]).Bytes()
+	// old[maxi_index] = young[maxi_index]
+	// count --
+	// if count == 0 {
+	// 	count = domains
+	// 	for i := 0; i < domains; i++ {
+	// 		young[i] = old[i]
+	// 		old[i] = 0
+	// 	}
+	// }
+	// periodC := time.Now().UnixNano()-sc
+	// fmt.Printf("poc verfy headers time: %v \n", periodC)
 
 	// s := time.Now().UnixNano()
 	abort, results := bc.engine.VerifyHeaders(bc, headers, seals)
