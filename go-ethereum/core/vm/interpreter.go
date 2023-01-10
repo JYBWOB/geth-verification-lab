@@ -289,6 +289,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		}
 		defer threadAllWrite.Close()
 		fmt.Printf("%v\n",(time.Now().UnixNano()-s)/1000000)
+		// fmt.Printf("%v um\n",(time.Now().UnixNano()-s)/1000)
 		for i := 0; i < len(percent1); i++ {
 			threadAllWrite.WriteString("\t")
 			threadAllWrite.WriteString(strconv.FormatFloat(percent1[i], 'f', 2, 32))
