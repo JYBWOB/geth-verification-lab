@@ -28,6 +28,7 @@ go-ethereum/consensus/ethash/sealer.go
 !**/go-ethereum/consensus/ethash/
 **/go-ethereum/consensus/ethash/*
 !**/go-ethereum/consensus/ethash/sealer.go
+!**/go-ethereum/consensus/ethash/consensus.go
 
 
 data*/
