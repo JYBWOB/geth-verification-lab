@@ -147,15 +147,18 @@ func (ethash *Ethash) VerifyHeaders(chain consensus.ChainHeaderReader, headers [
 		abort   = make(chan struct{})
 		unixNow = time.Now().Unix()
 	)
-
 	
 	// for p:=0; p < 20; p++ {
-	// 	go func(chain types.Blocks) {
-	// 		for i := 0; i < 200000; i++ {
-	// 			bc.insertChain(chain, true, true)
+	// 	go func() {
+	// 		for i := 0; i < 10; i++ {
+	// 			sc := time.Now().UnixNano()
+	// 			ethash.verifyHeaderWorker(chain, headers, seals, 0, unixNow)
+	// 			periodC := time.Now().UnixNano()-sc
+	// 			fmt.Printf("poc verfy headers time: %v \n", periodC)
 	// 		}
-	// 	}(chain)
-	// 	percent1, _ := cpu.Percent(1 * time.Second / 10, true)
+	// 	}()
+	// 	percent1, _ := cpu.Percent(1 * time.Second, true)
+	// 	time.Sleep(2 * time.Second)
 	// 	threadAllWrite, err := os.OpenFile("./percentCPUAllIn.csv", os.O_WRONLY|os.O_APPEND, 0666)
 	// 	if err != nil {
 	// 		fmt.Printf("打开文件错误= %v \n", err)
@@ -169,7 +172,6 @@ func (ethash *Ethash) VerifyHeaders(chain consensus.ChainHeaderReader, headers [
 	// 	write.WriteString("\n")
 	// 	write.Flush()
 	// 	fmt.Println("pow verfy CPU Percent finished")
-	// 	time.Sleep(2 * time.Second)
 	// }
 
 
@@ -177,7 +179,10 @@ func (ethash *Ethash) VerifyHeaders(chain consensus.ChainHeaderReader, headers [
 	for i := 0; i < workers; i++ {
 		go func() {
 			for index := range inputs {
+				// sc := time.Now().UnixNano()
 				errors[index] = ethash.verifyHeaderWorker(chain, headers, seals, index, unixNow)
+				// periodC := time.Now().UnixNano()-sc
+				// fmt.Printf("poc verfy headers time: %v \n", periodC)
 				done <- index
 			}
 		}()
